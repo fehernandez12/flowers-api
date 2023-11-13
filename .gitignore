@@ -7,7 +7,7 @@ media/*
 __pycache__
 db.sqlite3
 media
-
+trained_model.h5
 # Backup files # 
 *.bak 
 

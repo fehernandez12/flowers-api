@@ -38,21 +38,30 @@ class ImagePredictionSerializer(serializers.ModelSerializer):
         new_image_arr = new_image_arr.reshape(1, SIZE, SIZE, 3)
         predictions = loaded_model.predict(new_image_arr)
         predicted_class = np.argmax(predictions)
-        print(predicted_class)
         label_encoder = self.make_encoder()
         decoded_label = label_encoder.inverse_transform([predicted_class])[0]
-        return FLOWERS_DICT.get(decoded_label, 'No reconocida')
+        return FLOWERS_DICT.get(decoded_label, 'No reconocida'), predictions[0][predicted_class]
 
     def create(self, validated_data):
         image = validated_data['image']
         checksum = self.generate_checksum(image)
+        saved_obj = Image.objects.filter(checksum=checksum).first()
+        if saved_obj and saved_obj.prediction:
+            print(f'Fetched from database: {saved_obj.checksum}')
+            return {
+                'image': saved_obj.image.url,
+                'prediction': saved_obj.prediction,
+                'accuracy': saved_obj.accuracy,
+            }
         image_object = Image.objects.create(image=image, checksum=checksum)
-        prediction = self.predict_image(f'.{image_object.image.url}')
+        prediction, accuracy = self.predict_image(f'.{image_object.image.url}')
         image_object.prediction = prediction
+        image_object.accuracy = round(accuracy * 100, 2)
         image_object.save()
         return {
             'image': image_object.image.url,
             'prediction': prediction,
+            'accuracy': image_object.accuracy,
         }
 
     class Meta:
