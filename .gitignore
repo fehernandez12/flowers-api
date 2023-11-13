@@ -8,6 +8,7 @@ __pycache__
 db.sqlite3
 media
 trained_model.h5
+.DS_Store
 # Backup files # 
 *.bak 
 
